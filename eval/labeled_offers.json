@@ -1,0 +1,140 @@
+[
+ {
+  "id": "s01",
+  "scam": true,
+  "sender": "Skillshare Team <partnerships@skil1share-creators.com>",
+  "body": "We want to sponsor your channel. Record the video first, payment is sent after it is live. Brief: https://bit.ly/sk-brief"
+ },
+ {
+  "id": "s02",
+  "scam": true,
+  "sender": "Brand Deals <branddeals.official@gmail.com>",
+  "body": "Hi creator! We are NordVPN and love your content. Pay a $30 processing fee to activate your creator account and we will send $2,000."
+ },
+ {
+  "id": "s03",
+  "scam": true,
+  "sender": "Audible Creators <creators@audibIe-partners.com>",
+  "body": "To receive your sponsorship, verify your channel by signing in with Google at the link below. Limited slots, respond within 24 hours."
+ },
+ {
+  "id": "s04",
+  "scam": true,
+  "sender": "Partnerships <deal@promo-hub.co>",
+  "body": "Payment will be made in Bitcoin after you publish. Download the creator kit: https://mega.nz/file/abc/creator-kit.zip"
+ },
+ {
+  "id": "s05",
+  "scam": true,
+  "sender": "Squarespace Sponsorship <sponsor@sqaurespace.com>",
+  "body": "Great news! You are selected. Please share your 2FA code so we can link your channel for payment."
+ },
+ {
+  "id": "s06",
+  "scam": true,
+  "sender": "Creator Team <team@paypaI-creators.net>",
+  "body": "We will pay you $5,000. First send a refundable deposit of $100 by gift card to confirm you are serious."
+ },
+ {
+  "id": "s07",
+  "scam": true,
+  "sender": "Dropbox Partners <p@dropbox-creators.io>",
+  "body": "Open the attached brief.exe for campaign details. This is urgent, act now."
+ },
+ {
+  "id": "s08",
+  "scam": true,
+  "sender": "Elevenlabs Ads <ads@elevenlab5.com>",
+  "body": "Sponsorship offer $1,500. Registration fee of $45 required to unlock your payout. Verify your account at the portal."
+ },
+ {
+  "id": "s09",
+  "scam": true,
+  "sender": "Grammarly Brand <brand.grammarly.deals@outlook.com>",
+  "body": "You have been selected for a paid promotion. Send your password so our team can post the video on your behalf."
+ },
+ {
+  "id": "s10",
+  "scam": true,
+  "sender": "Notion Creators <hi@n0tion-creators.com>",
+  "body": "Post the ad first. You will be paid by wire transfer after publication. Reply fast, slots close within 48 hours."
+ },
+ {
+  "id": "l01",
+  "scam": false,
+  "sender": "Dana Lee <dana@lumencloud.com>",
+  "body": "Hi, we would like to sponsor a 45-second integration for $900. Net 30 under a written contract. Usage rights 30 days. Brief: https://lumencloud.com/creators"
+ },
+ {
+  "id": "l02",
+  "scam": false,
+  "sender": "Marco Ruiz <marco@notion.com>",
+  "body": "We would love to partner on a dedicated video, $4,000, with a signed contract and a 50% deposit on signing. Details at https://www.notion.com/creators"
+ },
+ {
+  "id": "l03",
+  "scam": false,
+  "sender": "Priya Nair <partnerships@xyzai.dev>",
+  "body": "Offer: $1,000 for one 60-second integration. Exclusivity 6 months, Net 60. Website https://xyzai.dev"
+ },
+ {
+  "id": "l04",
+  "scam": false,
+  "sender": "Sam Okafor <sam@figma.com>",
+  "body": "Sponsoring a 30-second mention at $700. Payment within 30 days of delivery, contract attached as PDF. Please disclose as a paid partnership."
+ },
+ {
+  "id": "l05",
+  "scam": false,
+  "sender": "Team <creators@agency-partners.com>",
+  "body": "We represent several developer brands and have a $1,200 slot for an AI tool. Would you like the brief? Happy to sign a contract first."
+ },
+ {
+  "id": "l06",
+  "scam": false,
+  "sender": "Alex Chen <alex@cursor.com>",
+  "body": "Quick note: sponsoring a review video. $2,500 flat, Net 30. We can share the media kit in a Google Drive folder once you confirm interest."
+ },
+ {
+  "id": "l07",
+  "scam": false,
+  "sender": "Hana Sato <hana@descript.com>",
+  "body": "Sponsorship for one integration, $1,800. Please sign in to our creator dashboard at descript.com to view your unique affiliate link."
+ },
+ {
+  "id": "l08",
+  "scam": false,
+  "sender": "Ravi Menon <ravi@hostinger.com>",
+  "body": "We would like a 60-second ad at $1,100. Payment Net 30 after the video goes live, per the signed agreement. Talk soon."
+ },
+ {
+  "id": "l09",
+  "scam": false,
+  "sender": "Julia Roth <julia@raycast.com>",
+  "body": "Hello! Raycast would like to sponsor your next video. $900 for a 40 second segment. Contract to follow. Website https://raycast.com"
+ },
+ {
+  "id": "l10",
+  "scam": false,
+  "sender": "Ben Ortiz <ben@1password.com>",
+  "body": "Sponsorship for a security-themed video. As a thank you we also send a free family plan (gift code) to every creator. Fee $3,000, Net 30, contract included."
+ },
+ {
+  "id": "l11",
+  "scam": false,
+  "sender": "Kai Nakamura <kai@1password.com>",
+  "body": "1Password would like to sponsor a video about password managers. $3,200, Net 30, contract included. Website https://1password.com"
+ },
+ {
+  "id": "l12",
+  "scam": false,
+  "sender": "Lena Fox <lena@shopify.com>",
+  "body": "Hi! Shopify would like a 45-second integration at $2,000. We use Google Drive for briefs and will share the link after the contract is signed. Payment Net 30."
+ },
+ {
+  "id": "s11",
+  "scam": true,
+  "sender": "1Password Creators <team@1password-creators.com>",
+  "body": "Congrats, sponsorship of $2,500! Send us your Google password so we can verify your channel, then payment follows."
+ }
+]

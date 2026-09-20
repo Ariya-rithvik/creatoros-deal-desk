@@ -1,0 +1,19 @@
+From: Dev Rel Team <creators@lumencloud.com>
+Subject: Lumen Cloud x Arya Builds - sponsored video proposal
+
+Hi Arya,
+
+Thanks again for the last collaboration. We would like to sponsor another video about Lumen Cloud (https://lumencloud.com). Lumen Cloud is simple cloud hosting for developers. You can deploy from GitHub in one command, every app gets free SSL certificates, and we run data centers in 4 regions. The Starter plan is $5 per month.
+
+Offer: $900 for one 45-second integration.
+Usage rights: 30 days of organic reposting.
+No exclusivity.
+Payment terms: Net 30 after the video goes live, under a written contract.
+Deadline: publish by 2026-11-05.
+Talking points:
+- Deploy from GitHub in one command
+- Free SSL on every app
+Please say "Link is in the description" and mention our paid partnership clearly.
+
+Thanks,
+Dev Rel Team, Lumen Cloud Inc.

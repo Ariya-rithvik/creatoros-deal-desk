@@ -1,0 +1,20 @@
+{
+  "name": "Arya",
+  "channel": "Arya Builds (sample profile)",
+  "niche": "Technology / AI / developer tools",
+  "tone": ["casual", "technical", "funny", "never corporate"],
+  "audience": "18-30, India + global developers",
+  "preferred_video_minutes": [8, 12],
+  "never_promote": ["gambling", "supplements", "crypto", "loans", "adult"],
+  "preferred_categories": ["developer tools", "ai", "laptops", "cloud"],
+  "typical_cta": "Link is in the description.",
+  "signature_phrases": ["okay so here's the thing", "let's be honest", "I actually tried this"],
+  "norms": {
+    "max_exclusivity_days": 90,
+    "max_net_days": 30,
+    "max_usage_days": 90,
+    "integration_seconds": [35, 55],
+    "rate_card_usd": {"integration_60s": 800}
+  },
+  "past_sponsor_domains": ["lumencloud.com"]
+}
