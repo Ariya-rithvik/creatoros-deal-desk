@@ -1,0 +1,51 @@
+1
+00:00:03,700 --> 00:00:07,700
+1/4  The scam offer
+
+2
+00:00:18,648 --> 00:00:24,648
+Eight red flags, each with its evidence. Capital I posing as an L.
+
+3
+00:00:24,724 --> 00:00:29,177
+Accepting a scam: refused.
+
+4
+00:00:29,177 --> 00:00:34,177
+2/4  One letter from a real brand - and a real company
+
+5
+00:00:43,565 --> 00:00:48,565
+MEDIUM, not blocked. The site still gets crawled.
+
+6
+00:00:51,308 --> 00:00:58,308
+Site says "fastest" - but its pricing page says $29, not $12. Held back.
+
+7
+00:00:59,682 --> 00:01:02,487
+"No contract is needed" is a HIGH warning, not a green tick.
+
+8
+00:01:02,487 --> 00:01:06,487
+3/4  A clean offer
+
+9
+00:01:19,109 --> 00:01:24,109
+Accepted. Checklist and a claim-safe script.
+
+10
+00:01:29,062 --> 00:01:32,389
+Disclosure first. Verified claims only. Your own take stays a placeholder.
+
+11
+00:01:32,389 --> 00:01:36,257
+4/4  Where AWS fits: your rules, in Cedar
+
+12
+00:01:36,257 --> 00:01:42,889
+Live Cedar rules, and which one allowed each decision.
+
+13
+00:01:42,889 --> 00:01:50,889
+Done. 14/14 scams caught, false blocks 5/17 -> 0/17.

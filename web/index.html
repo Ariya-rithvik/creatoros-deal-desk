@@ -252,6 +252,15 @@ $('#btnSamples').onclick = async () => { await api('/api/samples', 'POST'); awai
 $('#btnReset').onclick = async () => { await api('/api/reset', 'POST'); cur = offerFull = report = null; $('#desk').innerHTML = '<div class="empty">Load the sample offers, or paste one, then select it.</div>'; await loadState(); };
 $('#btnAdd').onclick = async () => { const raw = $('#paste').value; if(!raw.trim()) return; const r = await api('/api/offers', 'POST', {raw}); $('#paste').value=''; await loadState(); select(r.id); };
 loadState();
+// ?demo=1 runs the guided demo on load, so a plain browser window can be screen-recorded
+// without pasting anything into the console. ?demo=1.4 runs it slower.
+(() => {
+  const q = new URLSearchParams(location.search).get('demo');
+  if (!q) return;
+  const rate = parseFloat(q) || 1;
+  window.__demoRate = rate;
+  setTimeout(() => fetch('/autodemo.js').then(r => r.text()).then(src => { eval(src); }), 1200);
+})();
 </script>
 </body>
 </html>

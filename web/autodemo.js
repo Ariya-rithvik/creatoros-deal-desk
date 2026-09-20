@@ -155,5 +155,8 @@
 
   console.log('%cAuto-demo ready.', 'font-weight:bold');
   console.log('Run __demo.start()  |  __demo.start(1.4) for slower  |  __demo.pause() / .resume() / .stop()');
-  window.__demo.start();
+  // A single start. index.html sets window.__demoRate before loading this file; calling
+  // start() a second time from there left the first run alive (start resets the stop flag),
+  // so two demos raced and every caption was emitted twice.
+  window.__demo.start(window.__demoRate || 1);
 })();

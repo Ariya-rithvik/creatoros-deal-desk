@@ -1,6 +1,25 @@
+<div align="center">
+
 # CreatorOS Deal Desk
 
-**Verify a sponsorship offer before you say yes.**
+### Verify a sponsorship offer before you say yes.
+
+[![tests](https://img.shields.io/badge/tests-103%20passing-2ea44f)](tests/)
+[![python](https://img.shields.io/badge/python-3.11%2B-3776ab)](https://www.python.org/)
+[![policy: Cedar](https://img.shields.io/badge/policy-AWS%20Cedar-ff9900)](https://www.cedarpolicy.com/)
+[![crawler](https://img.shields.io/badge/crawler-real%20Chromium-4285f4)](https://playwright.dev/)
+[![licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
+[![track](https://img.shields.io/badge/First%20Commit-Build%20It-232f3e)](SUBMISSION.md)
+
+**No API keys · fully deterministic · nothing is ever sent or published automatically**
+
+[Why](#why-this-exists) · [It works on the real internet](#it-works-on-the-real-internet-not-just-the-demo) · [Quick start](#quick-start) · [The agents](#the-agents) · [Where AWS fits](#where-aws-fits-cedar) · [What we measured](#what-we-measured) · [Honest limits](#honest-limits)
+
+<img src="docs/screenshot-claims.png" alt="A claim the brand wants the creator to make, held back because the brand's own pricing page contradicts it" width="850">
+
+</div>
+
+---
 
 A creator gets a brand email. Before they trust it, the Deal Desk checks the sender for scam patterns,
 crawls the brand's website in a real browser, verifies every claim the brand wants them to say against
@@ -46,6 +65,11 @@ LIVE CRAWL of https://www.cedarpolicy.com   (fixture: None — the real internet
 
 The sample offers and their four websites are **fictional fixtures** so the demo runs offline and the
 "scam" is one nobody gets hurt by. Any other domain is crawled live.
+
+<p align="center">
+  <img src="docs/screenshot-scam.png" alt="A scam offer: eight red flags, each with the evidence that triggered it" width="850"><br>
+  <em>A scam offer. Eight red flags, each carrying the evidence snippet that triggered it. The brand link is never opened.</em>
+</p>
 
 ## Quick start
 
@@ -99,6 +123,11 @@ Cedar earns its place for three specific reasons: `forbid` beats `permit` and un
 safety rule cannot be accidentally widened; it is deterministic and needs no model, key or network; and it
 reports *which* policy decided, so the ledger records not just what the creator chose but under which of
 their own rules.
+
+<p align="center">
+  <img src="docs/screenshot-cedar.png" alt="The live Cedar rules, and the ledger column naming which rule allowed each decision" width="850"><br>
+  <em>The live Cedar rules, and the ledger column naming which rule allowed each decision.</em>
+</p>
 
 **This layer can only ever tighten.** `pipeline.decide()` keeps its own guard and a decision needs *both*
 to allow it — a wide-open policy file still cannot accept a `DO_NOT_ENGAGE` offer, and

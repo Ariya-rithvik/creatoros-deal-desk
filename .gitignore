@@ -2,3 +2,5 @@ __pycache__/
 .pytest_cache/
 data/
 *.pyc
+demo_raw.mp4
+probe.mp4
