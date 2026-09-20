@@ -15,6 +15,8 @@
 
 [Why](#why-this-exists) · [It works on the real internet](#it-works-on-the-real-internet-not-just-the-demo) · [Quick start](#quick-start) · [The agents](#the-agents) · [Where AWS fits](#where-aws-fits-cedar) · [What we measured](#what-we-measured) · [Honest limits](#honest-limits)
 
+### [▶ Watch the 2-minute demo](https://youtu.be/bK3wQKxDuXw)
+
 <img src="docs/screenshot-claims.png" alt="A claim the brand wants the creator to make, held back because the brand's own pricing page contradicts it" width="850">
 
 </div>
@@ -70,6 +72,63 @@ The sample offers and their four websites are **fictional fixtures** so the demo
   <img src="docs/screenshot-scam.png" alt="A scam offer: eight red flags, each with the evidence that triggered it" width="850"><br>
   <em>A scam offer. Eight red flags, each carrying the evidence snippet that triggered it. The brand link is never opened.</em>
 </p>
+
+## What happens in the demo
+
+[▶ 2 minutes](https://youtu.be/bK3wQKxDuXw) — three offers, three different outcomes. The video has no
+narration, so here is what you are watching at each point.
+
+### 0:03 — A scam offer, and the link it never opens
+
+<p align="center"><img src="docs/screenshot-scam.png" width="850" alt="Eight red flags, each with the evidence that triggered it"></p>
+
+The sender is `partners@lumencIoud-creators.co` — a **capital I** where an L should be. Homoglyphs are
+normalised before comparison, so the real brand underneath is visible and the domain is flagged as
+impersonation. Seven more follow: a $49 "verification fee", gift-card payment, publish-first with no
+contract, a "verify your channel" sign-in, a shortened link and a `.zip` creator kit. Every flag carries
+the sentence that triggered it, so the creator can disagree with any of them.
+
+Verdict **DO_NOT_ENGAGE** — and the brand's link is **never fetched**, because requesting a URL from a
+scam email confirms your mailbox is live. Clicking Accept is refused; it needs an explicit override,
+which is written into a hash-chained ledger.
+
+### 0:29 — A domain one letter from a real brand
+
+`cursos.dev` is one edit from `cursor.com`. The first version of this tool called that impersonation and
+blocked it — along with `motion.com` and `canvas.net`, which are **real companies**. It was treating
+coincidence as proof.
+
+Now a **typosquat signature** (the brand exactly once decoration is stripped, homoglyphs resolved, one
+transposition, one doubled letter) is fatal, while a bare **one-edit neighbour** is a MEDIUM *"check the
+official domain"* — and the check continues. Continuing matters, because the real problem was further in.
+
+### 0:51 — The claim the brand's own pricing page contradicts
+
+<p align="center"><img src="docs/screenshot-claims.png" width="850" alt="A claim held back because the brand's own pricing page says $29, not $12"></p>
+
+The brand wants the creator to say *"Cursos is the fastest way to learn to code, **for $12 per month**."*
+The site **does** say "fastest" — so an earlier version waved the whole sentence through and then
+suggested quoting it. But their pricing page says **$29**. A superlative the site repeats does not vouch
+for a number the site never published, so the claim is **held back** with the reason and a safe rewrite.
+
+Under the FTC Endorsement Guides, the creator is the one liable for that sentence — not the brand.
+
+Just below it, *"No contract is needed, we keep things simple"* is raised as a **HIGH** term issue. An
+earlier version matched the bare word "contract" and showed it as a green tick.
+
+### 1:02 — A clean offer, accepted
+
+Lumen Cloud, genuinely. **LOW**. Accepting produces a disclosure checklist (YouTube's paid-promotion
+flag, disclosure above the fold) and a sponsor segment built only from claims that survived — each line
+citing the fact it came from. The creator's own opinion is left as a visible **placeholder**; the tool
+never invents what they thought of the product.
+
+### 1:32 — Where AWS fits
+
+<p align="center"><img src="docs/screenshot-cedar.png" width="850" alt="Live Cedar rules and the ledger column naming which rule allowed each decision"></p>
+
+The five live **Cedar** rules, and the ledger's *"Allowed by"* column naming which rule authorised the
+decision. The Trust Graph below records what the creator actually said, and which fact backed it.
 
 ## Quick start
 
@@ -165,7 +224,15 @@ On a 31-offer labelled sender set:
 The audit found five ways the tool was misleading the creator — the worst being that *any* domain within
 one edit of a known brand was treated as impersonation, so `motion.com`, `canvas.net` and `cursos.dev`
 (all real companies) were rated DO_NOT_ENGAGE with their sites never crawled. Details in
-[HANDOFF.md](HANDOFF.md) §2; each fix has a regression test verified to **fail against the pre-fix code**.
+each fix has a regression test in `tests/test_audit_fixes.py`, verified to **fail against the pre-fix code**:
+
+| # | What it did |
+|---|---|
+| 1 | Any domain within 1–2 edits of a known brand was fatal, so `motion.com`, `canvas.net` and `cursos.dev` — real companies — were rated DO_NOT_ENGAGE with their sites never crawled. |
+| 2 | `has_contract` matched the bare word, so *"No contract is needed"* was shown to the creator as a **green tick** and suppressed the publish-first warning. |
+| 3 | The superlative check ran before the numeric one and never re-checked, so *"the fastest way to deploy, for $9 a month"* passed against a site saying $25 — and the suggested rewrite quoted the $9 back. |
+| 4 | The script guard inspected only `claim` lines, so a creator-approved *attributed* rewrite could speak a figure the brand's site never published. |
+| 5 | A non-USD fee was skipped in silence — no comparison, no note — which reads as approval. |
 
 **Honest caveat:** that labelled set is self-authored, and the five near-miss cases were added *after* we
 found the defect. It is a before/after on a known bug — **not** evidence the detector generalises. Real

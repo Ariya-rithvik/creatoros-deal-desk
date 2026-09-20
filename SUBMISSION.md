@@ -1,4 +1,6 @@
-# CreatorOS Deal Desk — First Commit (AWS x WeMakeDevs, Sept 17–20 2026)
+# CreatorOS Deal Desk — First Commit
+
+**Demo video: https://youtu.be/bK3wQKxDuXw** (AWS x WeMakeDevs, Sept 17–20 2026)
 
 **Track: Build It** (open source, runs entirely on a local machine, no AWS account needed).
 **AWS open source used: [Cedar](https://www.cedarpolicy.com/)** — the policy engine that decides what the
@@ -109,7 +111,7 @@ self-authored, and the five near-miss cases were written *after* we found the de
 before/after on a known bug — not evidence the detector generalises. Real anonymised offers are the
 next step, and we say so in the README rather than rounding it into an accuracy claim.
 
-The other four defects are in `HANDOFF.md` §2, each with a regression test in `tests/test_audit_fixes.py`
+The other four defects are listed in the README, each with a regression test in `tests/test_audit_fixes.py`
 that we verified **fails against the pre-fix code** before trusting it.
 
 ## What we learned
