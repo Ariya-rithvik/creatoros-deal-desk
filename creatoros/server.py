@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel, Field
 
 from . import policy
@@ -78,6 +78,13 @@ def _summary(o: Dict[str, Any]) -> Dict[str, Any]:
 @app.get("/", response_class=HTMLResponse)
 def index() -> str:
     return WEB.read_text(encoding="utf-8")
+
+
+@app.get("/autodemo.js")
+def autodemo() -> Response:
+    """The demo driver, so recording it is one line in the console instead of a 130-line paste."""
+    return Response((ROOT / "web" / "autodemo.js").read_text(encoding="utf-8"),
+                    media_type="application/javascript")
 
 
 @app.get("/api/state")
