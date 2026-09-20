@@ -136,5 +136,53 @@
   "scam": true,
   "sender": "1Password Creators <team@1password-creators.com>",
   "body": "Congrats, sponsorship of $2,500! Send us your Google password so we can verify your channel, then payment follows."
+ },
+ {
+  "id": "l13",
+  "scam": false,
+  "sender": "Marco Ruiz <marco@motion.com>",
+  "body": "We would like to sponsor a 45-second integration. Offer: $1,200. Usage rights: 30 days. No exclusivity. Payment terms: Net 30 under a written contract. Details: https://motion.com/partners"
+ },
+ {
+  "id": "l14",
+  "scam": false,
+  "sender": "Instructure Canvas <partners@canvas.net>",
+  "body": "We run course software for universities and would like to sponsor one video. Offer: $2,000 for a 60-second integration. Net 30, written contract. https://canvas.net/about"
+ },
+ {
+  "id": "l15",
+  "scam": false,
+  "sender": "Cursos Partnerships <partnerships@cursos.dev>",
+  "body": "We are a project-based coding school and would like to sponsor a video. Offer: INR 60,000 for one 45-second integration. Payment terms: Net 30 from invoice. https://cursos.dev"
+ },
+ {
+  "id": "l16",
+  "scam": false,
+  "sender": "Bitwarder Security <hello@bitwarder.io>",
+  "body": "We build a password manager for small teams and would like to discuss a sponsorship. Offer: $1,500 for a 60-second integration. Net 30, written contract. https://bitwarder.io/pricing"
+ },
+ {
+  "id": "l17",
+  "scam": false,
+  "sender": "Descripto Media <deals@descripto.com>",
+  "body": "We are a small captioning studio. We would like to sponsor a video. Offer: $800. Net 30 under a written contract. https://descripto.com"
+ },
+ {
+  "id": "s12",
+  "scam": true,
+  "sender": "Grammarly Creators <team@grammarIy-partners.com>",
+  "body": "Sponsorship confirmed. To unlock your $2,000 payment, pay a one-time $39 activation fee and sign in to verify your channel at https://bit.ly/gr-verify"
+ },
+ {
+  "id": "s13",
+  "scam": true,
+  "sender": "Shopify Brand Team <ads@shoppify.com>",
+  "body": "We want to sponsor you. Record and publish the video first. Payment is released after it is live, by gift card. Assets: https://mega.nz/file/kit.zip"
+ },
+ {
+  "id": "s14",
+  "scam": true,
+  "sender": "Coursera Partners <p@c0ursera-official.net>",
+  "body": "Urgent: slots close within 24 hours. Pay the refundable deposit of $25 to reserve your slot, then log in to verify your account."
  }
 ]

@@ -215,7 +215,7 @@ def test_full_flow_over_http_and_scam_gate(client):
         rep = client.post(f"/api/offers/{oid}/check", headers=H).json()
         levels[oid] = rep["risk"]["level"]
         assert "facts" not in rep
-    assert sorted(levels.values()) == ["DO_NOT_ENGAGE", "LOW", "MEDIUM"]
+    assert sorted(levels.values()) == ["DO_NOT_ENGAGE", "LOW", "MEDIUM", "MEDIUM"]
     scam = next(o for o, lv in levels.items() if lv == "DO_NOT_ENGAGE")
     assert client.post(f"/api/offers/{scam}/decide", headers=H, json={"decision": "accept"}).status_code == 409
     ok = next(o for o, lv in levels.items() if lv == "LOW")

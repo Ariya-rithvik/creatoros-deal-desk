@@ -1,9 +1,14 @@
-"""Regression eval for the Sender Verifier on a labeled set of 20 offers.
+"""Regression eval for the Sender Verifier on a labeled set of 31 offers (14 scam, 17 legit).
 
 HONESTY NOTE: this set was written by the same people who wrote the rules, so it is a regression
 suite, not an independent accuracy claim. Real-world performance needs real (anonymised) offers.
 Some legit cases are deliberately awkward (an offer that mentions a 'gift code', a dashboard sign-in)
 so the false positives it produces are visible instead of hidden.
+
+l13-l17 are legitimate companies whose domain sits one edit from a brand scammers impersonate
+(Motion/Notion, Canvas/Canva, Cursos/Cursor, Bitwarder/Bitwarden, Descripto/Descript). They were
+added AFTER the detector was found to condemn all five as impersonation, so the number they produce
+is a before/after on a known defect, not evidence that the detector generalises.
 """
 import json
 import sys

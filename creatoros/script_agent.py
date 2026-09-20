@@ -60,8 +60,8 @@ def build_script(campaign: Dict[str, Any], claims: List[Dict[str, Any]], profile
     lines: List[Dict[str, Any]] = []
     warnings: List[str] = []
 
-    def add(kind: str, text: str, source=None, needs_approval=False, placeholder=False):
-        lines.append({"kind": kind, "text": text, "source": source,
+    def add(kind: str, text: str, source=None, needs_approval=False, placeholder=False, action=None):
+        lines.append({"kind": kind, "text": text, "source": source, "action": action,
                       "needs_approval": needs_approval, "placeholder": placeholder})
 
     # 1. transition + 2. disclosure (always before any claim)
@@ -97,7 +97,12 @@ def build_script(campaign: Dict[str, Any], claims: List[Dict[str, Any]], profile
     for idx in sorted(set(approved_rewrites or [])):
         if 0 <= idx < len(held):
             txt = held[idx]["rewrite"]["text"]
-            add("rewrite", txt, placeholder="[" in txt)          # bracketed text is for the creator to fill in
+            cited = _facts_for(held[idx])
+            # Carry the evidence onto the line so check_script can re-verify it independently.
+            src = ({"fact_id": cited[0]["fact_id"], "url": cited[0]["url"],
+                    "fact_text": cited[0]["fact_text"], "facts": cited} if cited else None)
+            add("rewrite", txt, source=src, placeholder="[" in txt,  # bracketed text is for the creator to fill in
+                action=held[idx]["rewrite"].get("action"))
             if held[idx]["rewrite"].get("requires_personal_use"):
                 warnings.append(f"Rewrite {idx} contains a personal-experience placeholder you must fill in honestly.")
 
@@ -134,6 +139,18 @@ def check_script(script: Dict[str, Any]) -> List[str]:
     for l in script["lines"]:
         if l["kind"] == "disclosure":
             seen_disclosure = True
+        # An "attribute" rewrite quotes the brand's own sentence back to the audience, so it may keep
+        # the brand's WORDING - but a figure in it is still a figure the creator says out loud, and
+        # the guard used to look only at `claim` lines. Saying 'Brand says "$9 a month"' when the
+        # site says $25 is exactly the mistake this tool exists to prevent.
+        if l["kind"] == "rewrite" and l.get("action") == "attribute":
+            if not seen_disclosure:
+                problems.append(f"attributed claim before disclosure: {l['text']}")
+            facts = (l.get("source") or {}).get("facts") or []
+            bad = unsupported_numbers(l["text"], [{"id": f["fact_id"], "text": f["fact_text"]} for f in facts])
+            if bad or not facts:
+                problems.append(f"attributed claim states numbers the brand's site does not show: {l['text']}"
+                                + (f" (numbers not found: {', '.join(bad)})" if bad else " (no cited fact)"))
         if l["kind"] == "claim":
             if not seen_disclosure:
                 problems.append(f"claim before disclosure: {l['text']}")

@@ -27,6 +27,7 @@ ALLOWED_HOSTS = {"127.0.0.1", "localhost", "testserver"}
 CSRF_HEADER = "x-creatoros"
 SAMPLES = [("xyz_ai", "Sponsorship: XYZ AI x Arya Builds"),
            ("lumen_scam", "URGENT: Lumen Cloud paid sponsorship"),
+           ("cursos_nearmiss", "Cursos x Arya Builds - sponsored integration"),
            ("lumen_clean", "Lumen Cloud x Arya Builds - sponsored video")]
 
 app = FastAPI(title="CreatorOS Deal Desk", version="0.1.0", docs_url=None, redoc_url=None, openapi_url=None)

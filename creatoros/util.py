@@ -42,6 +42,36 @@ def deconfuse(domain: str) -> str:
     return d.lower().replace("0", "o").replace("rn", "m").replace("vv", "w")
 
 
+_DIGIT_HOMOGLYPHS = str.maketrans({"0": "o", "1": "l", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b"})
+
+
+def homoglyph_key(label: str) -> str:
+    """Normalise a domain label to the letters it visually READS as, for comparison only.
+
+    Extends `deconfuse` with the digit-for-letter swaps typosquatters use, so 'elevenlab5'
+    and 'elevenlabs' compare equal. Only digits with an unambiguous letter shape are mapped
+    (2, 6 and 9 are left alone).
+    """
+    return deconfuse(label).translate(_DIGIT_HOMOGLYPHS)
+
+
+def is_transposition(a: str, b: str) -> bool:
+    """True if `a` is `b` with exactly one adjacent pair swapped ('sqaurespace' <- 'squarespace')."""
+    if len(a) != len(b) or a == b:
+        return False
+    diff = [i for i, (x, y) in enumerate(zip(a, b)) if x != y]
+    return (len(diff) == 2 and diff[1] == diff[0] + 1
+            and a[diff[0]] == b[diff[1]] and a[diff[1]] == b[diff[0]])
+
+
+def is_doubling(a: str, b: str) -> bool:
+    """True if one string is the other with a single letter doubled ('nottion' <- 'notion')."""
+    lo, hi = (a, b) if len(a) < len(b) else (b, a)
+    if len(hi) != len(lo) + 1 or not lo:
+        return False
+    return any(hi[i] == hi[i - 1] and hi[:i] + hi[i + 1:] == lo for i in range(1, len(hi)))
+
+
 def levenshtein(a: str, b: str) -> int:
     if a == b:
         return 0

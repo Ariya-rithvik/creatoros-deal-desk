@@ -8,8 +8,8 @@ payment, file-share / shortener links, credential requests.
 import re
 from typing import Any, Dict, List, Optional
 
-from .util import (deconfuse, email_domain, find_urls, host_of, levenshtein,
-                   registrable_domain)
+from .util import (deconfuse, email_domain, find_urls, homoglyph_key, host_of,
+                   is_doubling, is_transposition, levenshtein, registrable_domain)
 
 FREEMAIL = {"gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "proton.me",
             "protonmail.com", "icloud.com", "aol.com", "mail.com", "gmx.com"}
@@ -65,11 +65,24 @@ def _snippet(text: str, m: "re.Match") -> str:
     return re.sub(r"\s+", " ", text[a:b])
 
 
-def _imitates(brand: str, labels: set) -> bool:
-    """True if a sender-domain label is the brand plus scam decoration, or a near-miss spelling of it.
+_MATCH_RANK = {"exact": 0, "confusable": 1, "near": 2}
+
+
+def _match_kind(brand: str, labels: set) -> Optional[str]:
+    """How a sender-domain label relates to `brand`: 'exact', 'confusable', 'near', or None.
 
     Deliberately NOT a substring test: 'canvasplus.io' must not be flagged as imitating 'canva'.
+
+    The three kinds carry very different confidence, and collapsing them was a real bug:
+
+      exact       the label IS the brand once scam decoration is stripped ('notion-creators')
+      confusable  a typosquat signature - homoglyphs resolved ('n0tion', 'elevenlab5'), one adjacent
+                  transposition ('sqaurespace'), or one doubled letter ('nottion')
+      near        only an edit-distance coincidence. 'motion' is one edit from 'notion', 'canvas' one
+                  from 'canva', and both are real companies. A near miss is worth telling the creator
+                  about, but it is NOT evidence of impersonation and must not block the offer.
     """
+    best: Optional[str] = None
     for label in labels:
         parts = [p for p in re.split(r"[-_.]", label) if p]
         core = "".join(p for p in parts if p not in _IMPERSONATION_TOKENS)
@@ -77,10 +90,12 @@ def _imitates(brand: str, labels: set) -> bool:
             if not c:
                 continue
             if c == brand:
-                return True
-            if len(c) >= 6 and levenshtein(c, brand) <= (1 if len(c) < 9 else 2):
-                return True
-    return False
+                return "exact"
+            if homoglyph_key(c) == homoglyph_key(brand) or is_transposition(c, brand) or is_doubling(c, brand):
+                best = "confusable"
+            elif best is None and len(c) >= 6 and levenshtein(c, brand) <= (1 if len(c) < 9 else 2):
+                best = "near"
+    return best
 
 
 def check_sender(sender: str, body: str, website_url: Optional[str] = None,
@@ -100,16 +115,30 @@ def check_sender(sender: str, body: str, website_url: Optional[str] = None,
         flags.append(_flag("freemail", "MEDIUM", "Sent from a free e-mail address",
                            "Real brand partnerships almost always come from a company domain.", sender))
 
-    # 2. look-alike of a known brand (skipped when the sender IS an official domain)
+    # 2. look-alike of a known brand (skipped when the sender IS an official domain).
+    # Every brand is scored and the STRONGEST match wins, so a coincidental near miss on one brand
+    # cannot hide a real impersonation of another.
     if sdom_raw and not verified_official:
         base = registrable_domain(deconfuse(sdom_raw)).split(".")[0]
         labels = {base, base.replace("1", "l"), base.replace("1", "i"), registrable_domain(sdom).split(".")[0]}
+        best: Optional[tuple] = None
         for brand, officials in KNOWN_BRANDS.items():
-            if _imitates(brand, labels):
-                flags.append(_flag("lookalike", "HIGH", f"Domain imitates {brand}",
-                                   f"'{sdom_raw}' is not an official {brand} domain "
-                                   f"(official: {', '.join(officials)}) but looks like one.", sender))
-                break
+            kind = _match_kind(brand, labels)
+            if kind and (best is None or _MATCH_RANK[kind] < _MATCH_RANK[best[0]]):
+                best = (kind, brand, officials)
+                if kind == "exact":
+                    break
+        if best and best[0] == "near":
+            _, brand, officials = best
+            flags.append(_flag("lookalike_near", "MEDIUM", f"Domain is one typo away from {brand}",
+                               f"'{sdom_raw}' is one character from {brand} (official: {', '.join(officials)}). "
+                               f"That is the shape of a typosquat, but it is also how unrelated companies with "
+                               f"similar names look. Check the official domain before you reply.", sender))
+        elif best:
+            _, brand, officials = best
+            flags.append(_flag("lookalike", "HIGH", f"Domain imitates {brand}",
+                               f"'{sdom_raw}' is not an official {brand} domain "
+                               f"(official: {', '.join(officials)}) but reads like one.", sender))
 
     # 2b. display name claims a known brand but the domain is not official
     if display and not verified_official and not any(f["id"] == "lookalike" for f in flags):

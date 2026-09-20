@@ -16,7 +16,7 @@ mode = "static" if "--static" in sys.argv else "auto"
 desk = DealDesk(Memory(Path(tempfile.mkdtemp()) / "demo_memory.json"), crawl_mode=mode)
 BAR = "-" * 78
 
-for name in ("lumen_scam", "xyz_ai", "lumen_clean"):
+for name in ("lumen_scam", "xyz_ai", "cursos_nearmiss", "lumen_clean"):
     raw = (ROOT / "sample_data" / "offers" / f"{name}.txt").read_text(encoding="utf-8")
     oid = desk.add_offer(raw, name)
     rep = desk.check(oid)

@@ -179,11 +179,24 @@ def verify_claims(claims: List[Dict[str, str]], facts: List[Dict[str, Any]], bra
                          if any(re.search(r"(?<![\w#.])" + re.escape(s.lower()) + r"(?!\w)", f["text"].lower()) for s in sups)
                          and (not topic_words or topic_words & set(_words(f["text"], brand_tokens)))]
             if repeating:
-                has_ev = any(EVIDENCE_CUE.search(f["text"]) for f in repeating)
-                status = "SITE_CITES_EVIDENCE" if has_ev else "SELF_CLAIM"
-                reason = ("The site makes this claim and points at evidence. Check that source before quoting."
-                          if has_ev else "The site makes this claim but shows no study, benchmark or source.")
-                cited = repeating[:3]
+                lexical, cited = cited, repeating[:3]
+                # The site repeating a superlative says NOTHING about a number in the same sentence.
+                # Without this re-check, "the fastest way to deploy, for $9 a month" was filed as a
+                # SELF_CLAIM against a site that says $25, and the suggested rewrite then quoted the
+                # $9 straight back to the audience. An unsupported number outranks the superlative.
+                # Numbers are checked against BOTH fact sets: the superlative usually lives on the
+                # homepage while the figure it is bundled with lives on the pricing page, and checking
+                # only the superlative's own fact would flag a number the site really does publish.
+                bad_numbers = unsupported_numbers(text, cited + [f for f in lexical if f not in cited])
+                if bad_numbers:
+                    status = "UNSUPPORTED"
+                    reason = (f"The site makes this claim, but these numbers in it are not on the site: "
+                              f"{', '.join(bad_numbers)}.")
+                else:
+                    has_ev = any(EVIDENCE_CUE.search(f["text"]) for f in repeating)
+                    status = "SITE_CITES_EVIDENCE" if has_ev else "SELF_CLAIM"
+                    reason = ("The site makes this claim and points at evidence. Check that source before quoting."
+                              if has_ev else "The site makes this claim but shows no study, benchmark or source.")
             else:
                 status = "UNSUBSTANTIATED"
                 reason = "A superlative/multiplier that the brand's own site does not even make."

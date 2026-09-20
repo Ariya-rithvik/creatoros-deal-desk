@@ -1,6 +1,7 @@
 {
   "_note": "DEMO FIXTURES ONLY. These fictional domains are served from sample_data/sites so the demo runs offline. Keys are lowercase. Any other domain is crawled live.",
   "xyzai.dev": "xyz_ai",
+  "cursos.dev": "cursos",
   "lumencloud.com": "lumen_cloud",
   "lumencioud-creators.co": "lookalike",
   "lumencloud-creators.co": "lookalike"

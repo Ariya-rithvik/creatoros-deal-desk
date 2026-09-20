@@ -19,14 +19,31 @@ analytics). The bigger parts are NOT built. See `PLAN.md`.
 ## 2. State right now
 
 * Location: `D:\creatoros` (git repo, see `git log`). Python 3.14, Windows 11. Not on any remote.
-* `python -m pytest` -> 61 passed. `python -m pyflakes creatoros scripts tests` -> clean.
-* `python scripts/eval_sender.py` -> 11/11 scams caught, 0/12 legit offers blocked. CAVEAT: the labeled set
-  (`eval/labeled_offers.json`, 23 offers) was written by us and rules were tuned on its failures. It is a regression
+* `python -m pytest` -> 82 passed. `python -m pyflakes creatoros scripts tests` -> clean.
+* `python scripts/eval_sender.py` -> 14/14 scams caught, 0/17 legit offers blocked. The same 31-offer set against the
+  pre-audit detector: 14/14 scams, **5/17 legit wrongly blocked**. CAVEAT UNCHANGED: the labeled set
+  (`eval/labeled_offers.json`) was written by us and rules were tuned on its failures. It is a regression
   suite, NOT an accuracy claim. Real data is Phase 1.
-* Live UI verified end to end in a real browser: three sample offers -> MEDIUM / DO_NOT_ENGAGE / LOW; scam accept refused
-  without override; override recorded in the hash-chained ledger; script has disclosure first and a placeholder for the
-  creator's own experience.
+* Live UI verified end to end in a real browser: four sample offers -> DO_NOT_ENGAGE / MEDIUM / MEDIUM / LOW; scam accept
+  refused without override; override recorded in the hash-chained ledger; script has disclosure first and a placeholder
+  for the creator's own experience.
 * Sample brands/sites are FICTIONAL fixtures (`sample_data/`). Any other domain is crawled live.
+
+### Second audit (2026-09-20): five defects found and fixed
+
+All five were live in commit 06f0235 and none was caught by the 61 tests that passed at the time. Each now has a
+regression test in `tests/test_audit_fixes.py` that was verified to FAIL against the pre-fix code.
+
+| # | Where | What it did |
+|---|---|---|
+| 1 | `sender_check._imitates` | Any label within 1-2 edits of a known brand was HIGH + fatal. `motion.com`, `canvas.net`, `cursos.dev`, `bitwarder.io`, `descripto.com` were all condemned as impersonation, which means DO_NOT_ENGAGE, no site crawl and no reply draft for five real companies. Now split by match kind (see README): typosquat signature -> HIGH `lookalike`, bare neighbour -> MEDIUM `lookalike_near`. |
+| 2 | `offer_parser` + `terms` | `has_contract` matched the bare word "contract", so "No contract is needed" set it True. The Terms Analyst then printed "A written contract is mentioned" as a GREEN tick and suppressed the publish-first warning. Now a negation vetoes the match and raises a HIGH `contract` issue. |
+| 3 | `claims.verify_claims` | The superlative branch ran BEFORE the number check and never re-checked, so "the fastest way to deploy, for $9 a month" became a SELF_CLAIM against a site that says $25 - and the suggested rewrite quoted the $9 back verbatim. Numbers are now re-checked inside that branch, against the union of the lexically matched and superlative-repeating facts. |
+| 4 | `script_agent.check_script` | The guard looped only over `kind == "claim"`. A creator-approved `attribute` rewrite went into the spoken script unchecked, so defect 3 could reach the camera. Attributed lines now carry their evidence and are number-checked. |
+| 5 | `terms` / `fit` | A non-USD fee was skipped silently (no comparison, no note - silence reads as approval); now a LOW "not compared" issue. `fit` could publish score 50 beside the label "blocked"; a never-promote hit is now absolute. |
+
+`sample_data/offers/cursos_nearmiss.txt` + `sample_data/sites/cursos/` were added because **no existing sample
+exercised any of these paths** - that is precisely why the defects survived. That one offer hits 1, 2, 3 and 5.
 
 ## 3. How to run
 
@@ -45,7 +62,8 @@ State persists in `data/memory.json` (gitignored). `POST /api/reset` clears offe
 
 ```
 creatoros/
-  util.py            domains, homoglyph "deconfuse" (capital I->l, 0->o, rn->m, vv->w), levenshtein
+  util.py            domains, homoglyph "deconfuse" (capital I->l, 0->o, rn->m, vv->w), homoglyph_key
+                     (adds digit-for-letter), is_transposition, is_doubling, levenshtein
   netguard.py        SSRF guard: only PUBLIC http(s) addresses may be fetched
   sender_check.py    Sender Verifier: explainable red flags (each has severity, why, evidence snippet)
   offer_parser.py    e-mail -> brand, fee, deliverable, usage/exclusivity/net terms, talking points, promo code
@@ -62,9 +80,10 @@ creatoros/
   server.py          FastAPI + single-page UI host, with local-only guards
 web/index.html       single-file UI (vanilla JS, all dynamic text HTML-escaped)
 sample_data/         profile.json, offers/*.txt, sites/{xyz_ai,lumen_cloud,lookalike}, fixture_domains.json
-eval/labeled_offers.json   23 labeled offers (self-authored)
+eval/labeled_offers.json   31 labeled offers (self-authored; l13-l17 are the near-miss legit domains)
 scripts/             demo.py, eval_sender.py
-tests/               test_deal_desk.py (core), test_hardening.py (safety + review fixes)
+tests/               test_deal_desk.py (core), test_hardening.py (safety + review fixes),
+                     test_audit_fixes.py (second audit; each test verified to fail pre-fix)
 ```
 
 ## 5. Data flow (what `DealDesk.check()` does)
@@ -72,6 +91,8 @@ tests/               test_deal_desk.py (core), test_hardening.py (safety + revie
 1. Offer Parser -> `parsed` {sender, subject, body, brand, website, terms{...}, talking_points, cta, promo_code, missing}
 2. Sender Verifier -> flags[]. `fatal` = any HIGH flag whose id is in `risk.FATAL_IDS`
    (lookalike, upfront_fee, odd_payment, credential_request, file_link, young_domain).
+   NOTE `lookalike_near` is deliberately NOT fatal and NOT in FATAL_IDS: it is a MEDIUM "check this",
+   because a one-edit neighbour is as often a real company as a typosquat. Do not "simplify" it back.
 3. Explorer -> facts. If `fatal` and the domain is NOT a fixture, the site is NOT visited (`site.skipped=True`).
    Fixtures for unsafe senders are read as static HTML.
 4. Claim Verifier -> claims[] each {text, source, status, reason, support_ratio, evidence[{fact_id,text,url}], rewrite}
@@ -90,7 +111,10 @@ GET `/api/offers/{id}`, POST `/api/offers/{id}/check|decide|script`, GET `/api/m
 * Server: Host allowlist (DNS rebinding), `X-CreatorOS` header on non-GET (CSRF), no API docs, size caps.
 * Script: disclosure before any claim; every spoken factual line's numbers AND content words come from its cited facts;
   untraceable lines are dropped with a warning; the creator's experience is a visible placeholder, never invented;
-  flagged claims are excluded unless the creator approves a specific rewrite.
+  flagged claims are excluded unless the creator approves a specific rewrite. An approved `attribute` rewrite keeps the
+  brand's wording but its NUMBERS are still checked against the cited facts - `check_script` covers `rewrite` lines,
+  not just `claim` lines.
+* A number is never blessed by a superlative the site happens to repeat: the numeric check runs inside that branch too.
 * Offer text is hostile input: HTML-escape everything in the UI.
 
 ## 7. Known limits (be honest about these)
@@ -99,7 +123,12 @@ GET `/api/offers/{id}`, POST `/api/offers/{id}/check|decide|script`, GET `/api/m
   Team costs $25). Plan-aware matching is a known gap.
 * Claim matching is keyword-based; paraphrases can be missed. "Supported" means the brand's own site says it, not that it is true.
 * Terms parsing is regex-based. Fit uses keyword categories. Lookalike detection uses a known-brands list (`KNOWN_BRANDS`)
-  plus impersonation-decoration tokens; it can miss brands not in the list.
+  plus impersonation-decoration tokens; it can miss brands not in the list. A brand NOT in `KNOWN_BRANDS` cannot be
+  detected as impersonated at all - the list is the ceiling on this rule.
+* The near-miss (`lookalike_near`) rule is the honest compromise, not a solved problem: a genuine typosquat that uses a
+  plain single-letter substitution ("notiom.com") now reports MEDIUM rather than HIGH. It is still surfaced, still
+  scored, and the creator still sees the official domain to compare against - but it no longer blocks on its own.
+* The fee is only compared with the rate card in USD; other currencies are reported as unchecked, not converted.
 * DNS rebinding between the guard check and the browser request is only partly mitigated (host results are cached).
 * Eval set is self-authored (see section 2).
 
@@ -129,15 +158,21 @@ GET `/api/offers/{id}`, POST `/api/offers/{id}/check|decide|script`, GET `/api/m
 
 ## 9. Open questions for the user
 
-1. WHICH HACKATHON is this for (name, deadline, theme)? Asked several times, never answered. It decides whether Phase 1
-   (real-data eval) or Phase 3 (video) comes next, and how to pitch (developer/agent-infra vs human-impact).
-2. Are there real anonymised sponsor offers (or a creator willing to share some) for the Phase 1 eval?
-3. Push to a remote? None configured.
+1. ~~WHICH HACKATHON~~ ANSWERED 2026-09-20: deadline was **8pm the same day, ~5 hours from the ask**, theme open
+   ("take any theme"). That killed Phase 1 as planned (50+ real offers is not a five-hour task) and the time went into
+   the audit above instead. The hackathon NAME is still unknown; if a submission form needs a track, ask again.
+2. Are there real anonymised sponsor offers (or a creator willing to share some) for the Phase 1 eval? Still open.
+3. Push to a remote? None configured. Still open.
 
 ## 10. Next steps (suggested order)
 
+0. If a submission is still pending: the demo story is now "we found five ways our own tool lied to the creator, and
+   here is the before/after number" (5/17 -> 0/17 false blocks, same 14/14 scam recall). That is a stronger 180-second
+   story than the original three-verdict walkthrough, and it matches the winner pattern in NOTEPAD.md (a measured
+   number + honest limits). Use `python scripts/demo.py --static`; `cursos_nearmiss` is the offer to show.
 1. Phase 1: real offers + real eval (target: false-block <5% on real legit offers, scams caught >90%). Gmail read-only
-   connector optional; paste-in already works.
+   connector optional; paste-in already works. STILL THE RIGHT NEXT STEP - the extended labeled set is still
+   self-authored and l13-l17 were written after seeing the defect, so they prove a fix, not generalisation.
 2. Plan-aware claim matching (plan name -> its own price), then optional Gemini paraphrase pass re-checked by the guard.
 3. Phase 2: learn the creator's voice from back-catalog transcripts (reuse Cutlist segmentation in `D:\agentic_cinema_hack`).
 4. Only then Phase 3 (video) and Phase 4 (publish/analytics).

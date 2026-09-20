@@ -51,18 +51,28 @@ def analyze_terms(terms: Dict[str, Any], profile: Dict[str, Any]) -> Dict[str, A
     # fee vs rate card
     amt, cur, dur = terms.get("amount"), terms.get("currency"), terms.get("duration_seconds")
     rate60 = (norms.get("rate_card_usd") or {}).get("integration_60s")
-    if amt is not None and cur == "USD" and rate60:
+    if amt is None:
+        issues.append(_issue("fee", "MEDIUM", "not stated", "ask", "No fee is stated. Get the amount before doing any work."))
+    elif cur == "USD" and rate60:
         expected = rate60 * (dur / 60.0) if dur else rate60
         if amt < 0.7 * expected:
             issues.append(_issue("fee", "MEDIUM", f"${amt:,.0f}", f"your rate is about ${expected:,.0f}",
                                  f"Counter at ${expected:,.0f}."))
         else:
             ok.append(f"Fee ${amt:,.0f} is at or above your rate (about ${expected:,.0f})")
-    elif amt is None:
-        issues.append(_issue("fee", "MEDIUM", "not stated", "ask", "No fee is stated. Get the amount before doing any work."))
+    elif rate60:
+        # Silently skipping this left a creator paid in INR or EUR with NO fee analysis and no
+        # explanation, which reads as approval. Say that the comparison was not made.
+        issues.append(_issue("fee", "LOW", f"{cur or 'unknown currency'} {amt:,.0f}", "your rate card is in USD",
+                             f"This offer is not in USD, so it was not compared with your rate card "
+                             f"(about ${rate60:,.0f} per 60s). Convert it and check the fee yourself."))
 
     # contract / who pays first
-    if terms.get("pay_after_publication") and not terms.get("has_contract"):
+    if terms.get("contract_declined"):
+        issues.append(_issue("contract", "HIGH", "the offer says no contract is needed", "written contract first",
+                             "An offer that volunteers that there is no contract is giving you no recourse. "
+                             "Ask for a written agreement before you record anything, or decline."))
+    elif terms.get("pay_after_publication") and not terms.get("has_contract"):
         issues.append(_issue("contract", "MEDIUM", "payment only after publication, no contract", "written contract first",
                              "Ask for a written contract and a deposit before you record anything."))
     elif terms.get("has_contract"):

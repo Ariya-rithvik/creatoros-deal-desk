@@ -29,9 +29,11 @@ def analyze_fit(site_facts: List[Dict[str, Any]], offer_text: str, profile: Dict
     reasons: List[str] = []
     score = 50
     if never:
+        # A never-promote hit is absolute. Letting a preferred-category bonus add points back on top
+        # of it published a score of 50 next to the label "blocked", which reads as a contradiction.
         score = 0
         reasons.append(f"Category on your never-promote list: {', '.join(never)}")
-    if preferred:
+    elif preferred:
         score = min(100, score + 20 * len(preferred[:2]) + 10)
         reasons.append(f"Matches your preferred categories: {', '.join(preferred)}")
     if not found:

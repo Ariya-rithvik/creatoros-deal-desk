@@ -8,10 +8,15 @@ We build one phase, prove it, then move on. We do not build the whole platform a
 Offer in -> evidence report -> creator decision -> campaign -> claim-safe sponsor script.
 
 Acceptance (all currently met, see `tests/` and `scripts/eval_sender.py`):
-* the three sample offers get three different verdicts (MEDIUM / DO_NOT_ENGAGE / LOW)
+* the four sample offers get the verdicts DO_NOT_ENGAGE / MEDIUM / MEDIUM / LOW
 * scam accept is refused without an override; the override is ledgered
 * every spoken factual line is backed by a cited fact; the creator's experience is never invented
-* 61 tests pass; sender regression suite 11/11 scams caught, 0/12 legit blocked (self-authored set, see README)
+* an offer whose domain merely neighbours a known brand is checked, not blocked
+* 82 tests pass; sender regression suite 14/14 scams caught, 0/17 legit blocked (self-authored set, see README)
+
+Second audit (2026-09-20) found five defects in this phase and fixed them; see HANDOFF.md section 2. The lesson worth
+carrying into every later phase: **all five survived a green test suite because no sample offer exercised them**. New
+rules need a sample that can fail, not only a test that passes.
 
 ## Phase 1 - Real offers, real data (next, 2-3 days)
 
@@ -68,6 +73,15 @@ Goal: replace fixtures with the creator's actual inbox and prove accuracy on dat
 1. Scam offer arrives. Sender Verifier flags 8 things; verdict DO_NOT_ENGAGE; accept is refused; no reply drafted.
 2. Real-looking offer (XYZ AI). Real Chromium crawl; 7 claims checked; "fastest" and "doubles productivity" unsubstantiated,
    "50,000 developers" unsupported; terms exceed the creator's limits; counter-email drafted, not sent.
-3. Clean offer (Lumen Cloud). LOW. Accept -> checklist -> sponsor segment with disclosure first, verified claims only,
+3. The hard one (Cursos). The domain is one letter from a brand scammers impersonate - and the company is real. The
+   desk says MEDIUM, not DO_NOT_ENGAGE, and keeps checking: the site IS crawled, "no contract is needed" is raised as a
+   HIGH term issue instead of a green tick, the INR fee is reported as not compared, and "the fastest way to learn to
+   code, for $12 a month" is held back because the brand's own pricing page says $29 - even though the site does say
+   "fastest". Accept -> the $12 never reaches the script; the claim the site really publishes does.
+4. Clean offer (Lumen Cloud). LOW. Accept -> checklist -> sponsor segment with disclosure first, verified claims only,
    the creator's own take left as a placeholder.
-4. Creator Memory: hash-chained ledger shows the decisions; Trust Graph shows what the creator actually said.
+5. Creator Memory: hash-chained ledger shows the decisions; Trust Graph shows what the creator actually said.
+
+The number to say out loud: on the 31-offer labeled set, the detector catches 14/14 scams either way, but false blocks
+on legitimate offers went from **5/17 to 0/17** once impersonation was split from coincidence. Say plainly that the set
+is self-authored and that this is a before/after on a known defect, not a generalisation claim.

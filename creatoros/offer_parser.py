@@ -19,6 +19,10 @@ _DUR = re.compile(r"(\d+)\s*(day|week|month|year)s?", re.I)
 _DELIV = re.compile(r"(?P<n>\d{1,3})[- ]?(?:sec(?:ond)?s?|s)\b[^.\n]{0,25}?"
                     r"(?P<kind>integration|mention|ad|segment|spot|placement|shout-?out)", re.I)
 _UNIT_DAYS = {"day": 1, "week": 7, "month": 30, "year": 365}
+# An offer that says it needs NO contract is the opposite of an offer that mentions one.
+_NO_CONTRACT = re.compile(
+    r"(?i)\b(?:no|without|not)\s+(?:a\s+|any\s+)?(?:written\s+|signed\s+|formal\s+)?contracts?\b"
+    r"|\bcontract[- ]free\b|\bskip the contract\b|\bdon'?t (?:need|do|use) (?:a )?contracts?\b")
 
 
 def split_email(raw: str) -> Dict[str, str]:
@@ -117,7 +121,11 @@ def parse_offer(raw: str) -> Dict[str, Any]:
         if n:
             terms["net_days"] = int(n.group(1) or n.group(2))
     terms["pay_after_publication"] = bool(re.search(r"(?i)after (?:the )?(?:video|content|post)[^.\n]{0,20}(?:goes |is )?(?:live|published|posted)", body))
-    terms["has_contract"] = bool(re.search(r"(?i)written contract|signed contract|contract", body))
+    # "no contract needed" contains the word "contract". Matching the bare word made the Terms Analyst
+    # report "A written contract is mentioned" as a GREEN tick on an offer that had just refused one,
+    # and it suppressed the publish-first warning. A negation now vetoes the match and is reported.
+    terms["contract_declined"] = bool(_NO_CONTRACT.search(body))
+    terms["has_contract"] = bool(re.search(r"(?i)\bcontracts?\b", body)) and not terms["contract_declined"]
     terms["deposit"] = bool(re.search(r"(?i)deposit|upfront|up-front|advance payment|50% upfront", body))
 
     m = re.search(r"(?i)(?:deadline|publish by|by)\s*:?\s*(\d{4}-\d{2}-\d{2})", body)
