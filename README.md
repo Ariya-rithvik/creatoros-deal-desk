@@ -1,121 +1,169 @@
 # CreatorOS Deal Desk
 
-**Your AI team behind every sponsorship.** A creator gets a brand offer. Before they trust it, the Deal Desk
-checks the sender, crawls the brand's website in a real browser, verifies every claim the brand wants the creator
-to say against the brand's own published material, compares the terms with the creator's own limits, and returns
-an evidence report. The creator decides. If they accept, it builds a campaign checklist and drafts a sponsor
-segment in their voice, using only claims that were verified.
+**Verify a sponsorship offer before you say yes.**
 
-This is the first vertical slice of the larger CreatorOS plan (see `PLAN.md`). Video generation, editing,
-publishing and analytics are deliberately **not** built yet.
+A creator gets a brand email. Before they trust it, the Deal Desk checks the sender for scam patterns,
+crawls the brand's website in a real browser, verifies every claim the brand wants them to say against
+the brand's *own* published pages, compares the terms with that creator's personal limits, and returns
+one evidence-backed verdict. The creator decides. If they accept, it builds a compliance checklist and
+drafts a sponsor segment using only the claims that survived verification.
 
-## Why this problem
+**Nothing is ever sent or published automatically.** No API keys. Fully deterministic, so every verdict
+is repeatable and explainable.
 
-* Fake sponsorship offers are a documented wave: look-alike domains, up-front "verification fees", publish-first
-  payment, "verify your channel" sign-ins that take over the account
-  ([Bitdefender](https://www.bitdefender.com/en-us/blog/hotforsecurity/how-fake-sponsorship-emails-are-targeting-youtube-creators)).
-* Creators carry legal responsibility for what they say: the FTC Endorsement Guides
-  ([ftc.gov](https://www.ftc.gov/business-guidance/resources/ftcs-endorsement-guides-what-people-are-asking),
-  [16 CFR 255](https://www.ecfr.gov/current/title-16/chapter-I/subchapter-B/part-255)) say endorsers can be liable for
-  unsubstantiated performance claims and missing disclosures.
-* YouTube's Creator Partnerships handles brand inquiries inside YouTube. It does not (as far as we found) verify
-  the brand's claims, catch impersonation arriving by e-mail, or apply *your* personal limits. That is the gap.
+Built for **First Commit** (AWS Builder Center × WeMakeDevs, Sept 17–20 2026) — **Build It** track.
+AWS open source used: **[Cedar](https://www.cedarpolicy.com/)**. Full writeup: [SUBMISSION.md](SUBMISSION.md).
 
-## Run it
+---
+
+## Why this exists
+
+1. **Fake sponsorship offers are a documented wave.** Look-alike domains, up-front "verification fees",
+   publish-first payment, and "sign in to verify your channel" pages that take the account over
+   ([Bitdefender](https://www.bitdefender.com/en-us/blog/hotforsecurity/how-fake-sponsorship-emails-are-targeting-youtube-creators)).
+2. **Even a real offer can hurt the creator.** They repeat the brand's talking points — *"the fastest
+   tool"*, *"$12 a month"* — on camera, in their own voice. Under the FTC Endorsement Guides
+   ([16 CFR 255](https://www.ecfr.gov/current/title-16/chapter-I/subchapter-B/part-255)) the **endorser**
+   can be liable for unsubstantiated claims and missing disclosure. The brand wrote the sentence. The
+   creator is the one who said it.
+
+YouTube's Creator Partnerships handles brand inquiries inside YouTube. As far as we found, it does not
+verify the brand's claims, catch impersonation arriving by email, or apply *your* limits. That's the gap.
+
+## It works on the real internet, not just the demo
+
+Pointed at the live `cedarpolicy.com`, with one true claim and one we invented:
+
+```
+LIVE CRAWL of https://www.cedarpolicy.com   (fixture: None — the real internet)
+  mode: browser | pages: 1 | facts: 95
+
+  SUPPORTED       Cedar is an open source policy language for access control
+                  Backed by the brand's own published page.
+  UNSUBSTANTIATED It is the fastest policy engine available and used by 90,000 companies
+                  A superlative/multiplier that the brand's own site does not even make.
+```
+
+The sample offers and their four websites are **fictional fixtures** so the demo runs offline and the
+"scam" is one nobody gets hurt by. Any other domain is crawled live.
+
+## Quick start
 
 ```bash
 pip install -r requirements.txt
 python -m playwright install chromium
-python -m pytest                       # 100 tests
-python scripts/demo.py                 # terminal demo, real Chromium (add --static for no browser)
-python -m uvicorn creatoros.server:app --port 8090   # then open http://127.0.0.1:8090
-python scripts/eval_sender.py          # regression eval on 31 labeled offers
+
+python -m pytest                                    # 103 tests
+python scripts/demo.py                              # four offers, real Chromium (--static for no browser)
+python scripts/eval_sender.py                       # sender regression eval
+python -m uvicorn creatoros.server:app --port 8090  # UI at http://127.0.0.1:8090
 ```
 
-No API key is needed. Everything is deterministic, so results are repeatable and every verdict is explainable.
+Keep it bound to `127.0.0.1`: there is no login, and it reads a private inbox.
+Optional: `CREATOROS_CRAWL=browser|static|auto`, `CREATOROS_RDAP=1` (domain-age lookup, needs network).
 
-## The agents (what each one does)
+**Record the demo without a microphone:** start a screen recorder, open the UI, and paste
+`fetch('/autodemo.js').then(r=>r.text()).then(eval)` into the browser console. The desk clicks through
+its own demo with on-screen captions; `__demo.srt()` then downloads a matching subtitle file.
+Narration script: [DEMO_SCRIPT.md](DEMO_SCRIPT.md).
+
+## The agents
 
 | Agent | Module | Job |
 |---|---|---|
-| Offer Parser | `offer_parser.py` | e-mail -> brand, fee, deliverable, usage rights, exclusivity, payment terms, talking points |
-| Sender Verifier | `sender_check.py` | look-alike domains (I/l, 0/o, rn/m, 1/l, digit-for-letter, transposition, doubled letter), free-mail, fee demands, gift cards/crypto, publish-first, credential requests, shorteners, file-share/archives |
+| Offer Parser | `offer_parser.py` | email → brand, fee, deliverable, usage rights, exclusivity, payment terms, talking points |
+| Sender Verifier | `sender_check.py` | look-alike domains (homoglyphs, digit-for-letter, transposition, doubled letters), free-mail, fee demands, gift-card/crypto rails, publish-first, credential requests, shorteners, file-share archives |
 | Explorer | `site_explorer.py` | real Chromium crawl of the brand site into hashed, citable facts |
-| Claim Verifier | `claims.py` | each claim -> SUPPORTED / SELF_CLAIM / UNSUPPORTED / UNSUBSTANTIATED, with the cited fact and a safe rewrite |
-| Terms Analyst | `terms.py` | terms vs the creator's own norms (exclusivity, Net days, usage rights, rate card) |
-| Fit Analyst | `fit.py` | brand category vs the creator's never-promote list |
+| Claim Verifier | `claims.py` | each claim → SUPPORTED / SELF_CLAIM / SITE_CITES_EVIDENCE / UNSUPPORTED / UNSUBSTANTIATED, with the cited fact and a safe rewrite |
+| Terms Analyst | `terms.py` | terms vs **the creator's own** norms (exclusivity, Net days, usage rights, rate card) |
+| Fit Analyst | `fit.py` | brand category vs their never-promote list |
 | Risk Aggregator | `risk.py` | one verdict (LOW / MEDIUM / HIGH / DO_NOT_ENGAGE), every point mapped to a named reason, plus a counter-email draft |
-| Policy Agent | `policy.py` | the creator's own decision rules, written in **Cedar** (`policies/deal_desk.cedar`) and evaluated by AWS's open-source policy engine |
-| Campaign Agent | `campaign.py` | accepted offer -> deadline, approved/held-back claims, disclosure checklist |
-| Script Agent | `script_agent.py` | sponsor segment in the creator's voice from verified claims only |
+| **Policy Agent** | `policy.py` | the creator's decision rules, written in **Cedar** and evaluated by AWS's open-source policy engine |
+| Campaign Agent | `campaign.py` | accepted offer → deadline, approved/held-back claims, disclosure checklist |
+| Script Agent | `script_agent.py` | sponsor segment in their voice, from verified claims only |
 | Creator Memory | `memory.py` | profile, hash-chained decision ledger, Creator Trust Graph |
 
-## Safety design (each one is a test)
+## Where AWS fits: Cedar
 
-* Nothing outward-facing happens automatically: no e-mail is sent, nothing is published. Replies are drafts.
-* The Explorer only ever fetches **public** internet addresses (`netguard.py`): loopback, private ranges, link-local/cloud
-  metadata, local hostnames, credentials-in-URL and non-http(s) schemes are refused, on the first request, on every
-  redirect, and on every sub-request the browser makes (SSRF protection; offers are attacker-controlled input).
-* A link from an unsafe sender is **not opened at all** (opening it can confirm your mailbox is live).
-* Before any **live** crawl the site's `robots.txt` is fetched and obeyed; a disallowed path is not read. Demo
-  fixtures are local files and never touch the network, so robots is not consulted for them. At most 4 pages,
-  read-only, and only the brand URL that came with the offer.
-* The local server refuses foreign `Host` headers (DNS rebinding) and any non-GET request without the `X-CreatorOS`
-  header (CSRF), exposes no API docs, and caps input sizes. Keep it bound to 127.0.0.1: there is no login.
-* A risky offer can only be accepted with an explicit override, and the override is recorded in the ledger.
-* The decision rules also live in `policies/deal_desk.cedar`, as **Cedar** policies the creator can read and edit.
-  That layer can only ever **tighten**: `pipeline.decide()` keeps its own guard and a decision needs both to allow it,
-  so a wide-open policy file still cannot accept a `DO_NOT_ENGAGE` offer (there is a test for exactly that). A policy
-  file that will not parse fails **closed**; if `cedarpy` is not installed the layer abstains and says so, and the
-  built-in guard is unchanged. The ledger records which named rule allowed each decision.
-* No reply is drafted for a suspected scam. Only our own fictional demo fixtures are read for such offers, as plain HTML with no scripts.
-* The script never invents the creator's experience: that line is a visible placeholder.
-* The disclosure line always comes before any claim; every factual line cites facts from the brand's site, and every
-  number AND every content word of it must come from those facts (`line_supported`); a line that cannot be traced is
-  left out of the draft with a warning, and tampering with a line is caught by `check_script`.
-* Claims that failed verification are excluded unless the creator approves a specific rewrite. An approved rewrite that
-  **attributes** a claim to the brand ("Lumen Cloud says: ...") carries the brand's wording but is still checked for
-  numbers: the guard used to inspect only `claim` lines, so an attributed line could speak a figure the brand's site
-  never publishes.
-* The decision ledger is hash-chained, so editing history is detectable.
-* All offer text is HTML-escaped in the UI, because offers can be hostile.
+The rule *"you cannot accept a scam without an explicit override"* started as a Python `if` — invisible
+to the person it protects. It now lives in [`policies/deal_desk.cedar`](policies/deal_desk.cedar) as data
+the creator owns:
 
-## What is real and what is a fixture
+```cedar
+@id("forbid_risky_accept_without_override")
+forbid (principal, action == Action::"accept", resource)
+when { (resource.risk == "HIGH" || resource.risk == "DO_NOT_ENGAGE") && resource.override == false };
+```
 
-* The four sample offers and the sites `xyzai.dev`, `lumencloud.com`, `cursos.dev` and the look-alike domain are
-  **fictional demo fixtures**, served from `sample_data/sites` (loaded with `file://` into real Chromium). Any other
-  domain is crawled live.
-* Brand names in `sender_check.KNOWN_BRANDS` are used only to detect impersonation.
+Cedar earns its place for three specific reasons: `forbid` beats `permit` and unpermitted is denied, so a
+safety rule cannot be accidentally widened; it is deterministic and needs no model, key or network; and it
+reports *which* policy decided, so the ledger records not just what the creator chose but under which of
+their own rules.
+
+**This layer can only ever tighten.** `pipeline.decide()` keeps its own guard and a decision needs *both*
+to allow it — a wide-open policy file still cannot accept a `DO_NOT_ENGAGE` offer, and
+`tests/test_policy.py` asserts exactly that. A policy file that will not parse fails **closed**. If
+`cedarpy` is absent the layer abstains and says so, and the built-in guard is unchanged.
+
+## Safety, because the input is hostile
+
+Offers are attacker-controlled text containing URLs. Each of these is a test:
+
+* Nothing outward-facing happens automatically. Replies are drafts. No reply is drafted for a suspected scam.
+* The Explorer only ever fetches **public** addresses (`netguard.py`): loopback, private ranges,
+  link-local/cloud metadata, local hostnames, credentials-in-URL and non-http(s) schemes are refused — on
+  the first request, on every redirect, and on every sub-request the browser makes.
+* A link from an unsafe sender is **not opened at all** (opening it confirms your mailbox is live).
+* Before any **live** crawl the site's `robots.txt` is fetched and obeyed. Fixtures are local files and
+  never touch the network, so robots is not consulted for them. At most 4 pages, read-only.
+* The local server refuses foreign `Host` headers (DNS rebinding) and non-GET requests without the
+  `X-CreatorOS` header (CSRF), exposes no API docs, and caps input sizes.
+* A risky offer can only be accepted with an explicit override, recorded in a hash-chained ledger.
+* The script never invents the creator's experience — that line is a visible placeholder. The disclosure
+  always precedes any claim, and every factual line's numbers **and** content words must come from its
+  cited facts. Untraceable lines are dropped with a warning.
+* All offer text is HTML-escaped in the UI.
+
+## What we measured
+
+On a 31-offer labelled sender set:
+
+| | scams caught | legitimate offers wrongly blocked |
+|---|---|---|
+| before the mid-build audit | 14/14 | **5/17** |
+| after | 14/14 | **0/17** |
+
+The audit found five ways the tool was misleading the creator — the worst being that *any* domain within
+one edit of a known brand was treated as impersonation, so `motion.com`, `canvas.net` and `cursos.dev`
+(all real companies) were rated DO_NOT_ENGAGE with their sites never crawled. Details in
+[HANDOFF.md](HANDOFF.md) §2; each fix has a regression test verified to **fail against the pre-fix code**.
+
+**Honest caveat:** that labelled set is self-authored, and the five near-miss cases were added *after* we
+found the defect. It is a before/after on a known bug — **not** evidence the detector generalises. Real
+anonymised offers are the next step.
 
 ## Honest limits
 
-* `scripts/eval_sender.py` is a **regression suite**, not an accuracy claim: the labeled set (31 offers) was written
-  by the same people who wrote the rules, and several rules were tuned on failures it exposed. Real performance needs
-  real, anonymised offers. Current run: **14/14 scams caught, 0/17 legitimate offers wrongly blocked**. The same set
-  against the previous detector: 14/14 scams caught, **5/17 legitimate offers wrongly blocked** - five real companies
-  (Motion, Canvas, Cursos, Bitwarder, Descripto) condemned as impersonating a brand they merely neighbour. That
-  before/after is a fixed defect, not proof the detector generalises.
-* Impersonation is now reported in two strengths, because collapsing them was the cause of those five false blocks:
-  a **typosquat signature** (the brand exactly once scam decoration is stripped, homoglyphs resolved, one adjacent
-  transposition, or one doubled letter) is HIGH and stops the offer; a bare **one-edit neighbour** is MEDIUM, says so
-  in plain words, and lets the check continue. `motion.com` is one edit from `notion.com` and is a real company.
-* Claim checking uses keyword matching plus a numeric guard. It tells you whether the brand's *own* site supports a
-  statement, never whether the statement is true. Paraphrased claims can be missed.
-* The numeric guard checks that a number appears in the cited facts, not that it belongs to the right plan: "Starter is
-  $25 per month" would pass if the Team plan costs $25. Plan-aware matching is a known gap (same class of weakness our
-  claim-drift scan found in Veridemo Watch).
-* A superlative the brand's site also makes does **not** vouch for a number bundled with it. "The fastest way to deploy,
-  for $9 a month" is held back when the site says $25, even though the site does say "fastest". Numbers are checked
-  against both the facts that match the claim's wording and the facts that repeat the superlative, so a figure the site
-  publishes on another page still counts; a figure it publishes nowhere does not.
-* The fee is only compared with the rate card when both are in USD. A fee in another currency is reported as
-  **not compared** rather than passed over in silence.
-* Brand-fit uses keyword categories. Terms parsing is regex-based and can miss unusual phrasing.
-* Domain age (RDAP) is optional (`CREATOROS_RDAP=1`) and needs network access.
-* Not legal advice. The disclosure checklist follows FTC guidance; check local rules (e.g. ASCI in India).
+* The numeric guard checks a number *appears* in the cited facts, not that it belongs to the right plan.
+  "Starter is $25" passes if the **Team** plan costs $25. Plan-aware matching is a known gap.
+* "Supported" means *the brand's own site says it* — never that it is true.
+* Claim matching is keyword-based; a paraphrase can be missed.
+* Impersonation detection is bounded by a known-brands list. A brand not on that list cannot be detected
+  as impersonated at all.
+* A genuine typosquat using a plain single-letter substitution is reported MEDIUM, not HIGH. That is the
+  deliberate price of not blocking real companies; it is still surfaced and scored.
+* Terms parsing is regex-based. Brand fit uses keyword categories.
+* The fee is only compared with the rate card in USD; other currencies are reported as *not compared*.
+* DNS rebinding between the guard check and the browser request is only partly mitigated.
+* Not legal advice. The checklist follows FTC guidance; check local rules (e.g. ASCI in India).
 
-## Reused from your other projects
+## Scope
 
-`creatoros/truth_set.py` is a vendored copy of Veridemo Watch's fact engine (hashed facts, stable ids and the
-numeric-support guard `verify_claim`). The crawler follows the pattern proven in the claim-drift scan. The original
-projects were not modified.
+This is **one vertical slice** of a larger plan ([PLAN.md](PLAN.md)). Video generation, editing,
+publishing and analytics are deliberately **not built**. `creatoros/truth_set.py` is a vendored,
+unmodified copy of a fact engine from an earlier project of ours, marked as such at the top of the file;
+everything else here was written during the event.
+
+## Licence
+
+[MIT](LICENSE).
