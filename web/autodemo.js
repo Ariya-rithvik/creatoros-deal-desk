@@ -13,8 +13,17 @@
  * Slower/faster overall:   __demo.start(1.3)  (1.0 = the timings below, higher = slower)
  */
 (() => {
-  const S = { paused: false, stopped: false, rate: 1 };
+  const S = { paused: false, stopped: false, rate: 1, t0: 0, cues: [] };
   const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // Subtitles are captured from the real run, so they cannot drift out of sync with the recording.
+  const stamp = s => {
+    const ms = Math.max(0, Math.round(s * 1000));
+    const h = String(Math.floor(ms / 3600000)).padStart(2, '0');
+    const m = String(Math.floor(ms / 60000) % 60).padStart(2, '0');
+    const sec = String(Math.floor(ms / 1000) % 60).padStart(2, '0');
+    return `${h}:${m}:${sec},${String(ms % 1000).padStart(3, '0')}`;
+  };
 
   async function hold(ms) {
     const until = Date.now() + ms * S.rate;
@@ -38,6 +47,11 @@
     el.textContent = text;
     el.style.opacity = '1';
     if (seconds) setTimeout(() => { el.style.opacity = '0'; }, seconds * 1000);
+
+    const at = (Date.now() - S.t0) / 1000;
+    const prev = S.cues[S.cues.length - 1];
+    if (prev && prev.end > at) prev.end = at;          // never overlap the cue before it
+    S.cues.push({ at, end: at + (seconds || 4), text });
   }
 
   const offerByRisk = risk =>
@@ -118,8 +132,21 @@
 
   window.__demo = {
     start(rate = 1) {
-      S.rate = rate; S.stopped = false; S.paused = false;
+      S.rate = rate; S.stopped = false; S.paused = false; S.t0 = Date.now(); S.cues = [];
       run().catch(e => { if (!String(e).includes('stopped')) console.error(e); banner('demo stopped', 2); });
+    },
+    /* Subtitles for the run that just finished, timed against it.
+       __demo.srt()          -> downloads creatoros-demo.srt, ready to upload to YouTube
+       __demo.srt(12)        -> shifts every cue 12s later, if your recording has an intro first */
+    srt(offset = 0) {
+      const body = S.cues.map((c, i) =>
+        `${i + 1}\n${stamp(c.at + offset)} --> ${stamp(c.end + offset)}\n${c.text}\n`).join('\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([body], { type: 'text/plain' }));
+      a.download = 'creatoros-demo.srt';
+      a.click();
+      console.log(body);
+      return `${S.cues.length} cues, ${Math.round(S.cues[S.cues.length - 1]?.end || 0)}s`;
     },
     pause() { S.paused = true; banner('paused', 2); },
     resume() { S.paused = false; banner('resumed', 2); },
