@@ -57,6 +57,9 @@ No API key is needed. Everything is deterministic, so results are repeatable and
   metadata, local hostnames, credentials-in-URL and non-http(s) schemes are refused, on the first request, on every
   redirect, and on every sub-request the browser makes (SSRF protection; offers are attacker-controlled input).
 * A link from an unsafe sender is **not opened at all** (opening it can confirm your mailbox is live).
+* Before any **live** crawl the site's `robots.txt` is fetched and obeyed; a disallowed path is not read. Demo
+  fixtures are local files and never touch the network, so robots is not consulted for them. At most 4 pages,
+  read-only, and only the brand URL that came with the offer.
 * The local server refuses foreign `Host` headers (DNS rebinding) and any non-GET request without the `X-CreatorOS`
   header (CSRF), exposes no API docs, and caps input sizes. Keep it bound to 127.0.0.1: there is no login.
 * A risky offer can only be accepted with an explicit override, and the override is recorded in the ledger.

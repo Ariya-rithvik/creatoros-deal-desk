@@ -63,7 +63,7 @@ Goal: replace fixtures with the creator's actual inbox and prove accuracy on dat
 | Risk | Mitigation |
 |---|---|
 | YouTube expands Creator Partnerships to cover verification | our edge is cross-channel e-mail impersonation + creator-specific norms + claim substantiation; watch their release notes |
-| Scraping / ToS on live sites | robots.txt respect, low rate, read-only; only crawl the brand URL from the offer |
+| Scraping / ToS on live sites | robots.txt is fetched and obeyed before any live crawl (`site_explorer.robots_allows`), low rate, read-only, at most 4 pages; only the brand URL from the offer is crawled. NOTE: this row claimed robots.txt respect before the code did it - caught in the second audit. Do not write a mitigation here until it exists. |
 | Legal exposure from "risk" labels | wording is "your own norms" and "the brand's own site says", never "this is false" or legal advice |
 | Detector false blocks hurt trust | every flag shows its evidence; override always available and ledgered |
 | Small eval set | Phase 1 real-data eval before any accuracy claim |

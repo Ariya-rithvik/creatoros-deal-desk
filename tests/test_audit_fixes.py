@@ -187,6 +187,40 @@ def test_a_non_usd_fee_is_reported_as_unchecked_rather_than_silently_skipped(tmp
     assert "not compared" in fee["ask"] or "not in USD" in fee["ask"]
 
 
+# ---- 5b. robots.txt: PLAN.md claimed it, the code did not do it --------------------
+def test_a_disallowed_path_is_refused(monkeypatch):
+    from creatoros import site_explorer
+
+    monkeypatch.setattr(site_explorer, "robots_allows",
+                        lambda url, timeout=5.0: {"checked": True, "allowed": False,
+                                                  "note": "robots.txt disallows this path for our crawler"})
+    r = site_explorer.crawl("https://example.com/private/")
+    assert r["blocked"] is True and r["ok"] is False
+    assert "robots.txt" in r["error"]
+
+
+def test_robots_is_not_consulted_for_local_demo_fixtures(monkeypatch):
+    """Fixtures are file:// and never touch the network; checking robots for them would be a lie."""
+    from creatoros import site_explorer
+
+    called = []
+    monkeypatch.setattr(site_explorer, "robots_allows",
+                        lambda url, timeout=5.0: called.append(url) or {"checked": True, "allowed": True, "note": ""})
+    r = site_explorer.crawl("https://lumencloud.com", mode="static")
+    assert r["ok"] is True and called == []
+
+
+def test_an_unreadable_robots_is_reported_rather_than_assumed(monkeypatch):
+    """An absent robots.txt means 'nothing disallowed' - but say which of the three happened."""
+    from creatoros import site_explorer
+
+    monkeypatch.setattr(site_explorer, "is_public_url", lambda u: (True, ""))
+    import httpx
+    monkeypatch.setattr(httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.ConnectError("no route")))
+    out = site_explorer.robots_allows("https://example.com/x")
+    assert out["allowed"] is True and out["checked"] is False and "could not be read" in out["note"]
+
+
 # ---- 6. the whole thing, end to end, on the sample that exercises all of the above --
 def test_the_near_miss_sample_is_checked_rather_than_blocked_and_holds_the_wrong_price(tmp_path):
     """One offer that used to fail four different ways at once.

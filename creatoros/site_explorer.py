@@ -116,7 +116,42 @@ def _signals(pages: List[Dict[str, Any]], facts: List[Dict[str, Any]],
     return sig
 
 
-def crawl(url: str, mode: str = "auto", max_pages: int = 4, timeout_ms: int = 25000) -> Dict[str, Any]:
+_UA = "CreatorOS-DealDesk"
+
+
+def robots_allows(url: str, timeout: float = 5.0) -> Dict[str, Any]:
+    """Ask the site's robots.txt whether we may read this page.
+
+    Only live http(s) crawls are checked; demo fixtures are local files and never touch the network.
+    A robots.txt we cannot fetch is treated as permissive (that is what the standard says an absent
+    file means), but the outcome is always reported rather than assumed, so the creator can see which
+    of the three happened.
+    """
+    from urllib.robotparser import RobotFileParser
+    p = urlparse(url)
+    if p.scheme not in ("http", "https"):
+        return {"checked": False, "allowed": True, "note": "not a web address"}
+    robots_url = f"{p.scheme}://{p.netloc}/robots.txt"
+    ok, why = is_public_url(robots_url)
+    if not ok:
+        return {"checked": False, "allowed": False, "note": f"blocked: {why}"}
+    try:
+        import httpx
+        r = httpx.get(robots_url, timeout=timeout, follow_redirects=True,
+                      headers={"User-Agent": f"Mozilla/5.0 {_UA}"})
+        if r.status_code >= 400:
+            return {"checked": True, "allowed": True, "note": f"no robots.txt ({r.status_code}), so nothing is disallowed"}
+        rp = RobotFileParser()
+        rp.parse(r.text.splitlines())
+        allowed = rp.can_fetch(_UA, url)
+        return {"checked": True, "allowed": allowed,
+                "note": "allowed by robots.txt" if allowed else "robots.txt disallows this path for our crawler"}
+    except Exception as e:                       # noqa: BLE001 - unreachable robots.txt is not a refusal
+        return {"checked": False, "allowed": True, "note": f"robots.txt could not be read ({str(e)[:60]})"}
+
+
+def crawl(url: str, mode: str = "auto", max_pages: int = 4, timeout_ms: int = 25000,
+          respect_robots: bool = True) -> Dict[str, Any]:
     """Crawl `url`. mode: 'browser' | 'static' | 'auto' (browser, falling back to static)."""
     started = time.time()
     res = resolve(url)
@@ -128,6 +163,13 @@ def crawl(url: str, mode: str = "auto", max_pages: int = 4, timeout_ms: int = 25
             result["error"] = f"blocked: {why}"
             result["blocked"] = True
             return result
+        if respect_robots:
+            rob = robots_allows(url)
+            result["robots"] = rob
+            if not rob["allowed"]:
+                result["error"] = f"not crawled: {rob['note']}"
+                result["blocked"] = True
+                return result
     crawl_data: Optional[Dict[str, Any]] = None
     if mode in ("browser", "auto"):
         try:
