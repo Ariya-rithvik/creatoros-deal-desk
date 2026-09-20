@@ -234,9 +234,13 @@ async function renderMemory(){
     <div class="small"><b>${esc(p.name)}</b> - ${esc(p.niche)} - tone: ${esc(p.tone.join(', '))}</div>
     <div class="small muted">Never promote: ${esc(p.never_promote.join(', '))}. Preferred: ${esc(p.preferred_categories.join(', '))}.</div>
     <div class="small muted">Limits: exclusivity &le; ${esc(p.norms.max_exclusivity_days)} days, Net &le; ${esc(p.norms.max_net_days)}, usage rights &le; ${esc(p.norms.max_usage_days)} days.</div></div>
+    <div class="card"><div class="row spread"><h2>Your decision rules (Cedar)</h2>
+      <span class="pill ${m.policy.available?'LOW':'HIGH'}">${m.policy.available?'CEDAR ACTIVE':'NOT INSTALLED'}</span></div>
+      <div class="small muted">${esc(m.policy.note)} Edit <code>policies/${esc(m.policy.file)}</code> to add your own.</div>
+      ${m.policy.policies.length ? m.policy.policies.map(n => `<div class="sig ok small">&#10003; ${esc(n)}</div>`).join('') : ''}</div>
     <div class="card"><div class="row spread"><h2>Decision ledger</h2>
       <span class="pill ${m.ledger_check.ok?'LOW':'HIGH'}">${m.ledger_check.ok?'CHAIN INTACT':'CHAIN BROKEN'} (${esc(m.ledger_check.entries)})</span></div>
-    ${m.ledger.length ? `<table><tr><th>#</th><th>Brand</th><th>Action</th><th>Risk at the time</th><th>Note</th></tr>${m.ledger.map(e => `<tr><td>${esc(e.seq)}</td><td>${esc(e.brand)}</td><td>${esc(e.action)}</td><td>${esc(e.risk)}</td><td>${esc(e.note)}</td></tr>`).join('')}</table>` : '<div class="muted small">No decisions yet.</div>'}</div>
+    ${m.ledger.length ? `<table><tr><th>#</th><th>Brand</th><th>Action</th><th>Risk at the time</th><th>Note</th><th>Allowed by</th></tr>${m.ledger.map(e => `<tr><td>${esc(e.seq)}</td><td>${esc(e.brand)}</td><td>${esc(e.action)}</td><td>${esc(e.risk)}</td><td>${esc(e.note)}</td><td class="small muted">${esc(((e.policy||{}).reasons||[]).join(', '))}</td></tr>`).join('')}</table>` : '<div class="muted small">No decisions yet.</div>'}</div>
     <div class="card"><h2>Creator Trust Graph</h2><div class="small muted">Brand, claim, evidence, and what you actually said.</div>
     ${Object.keys(m.trust).length ? Object.entries(m.trust).map(([b, n]) => `<h3 style="margin-top:14px">${esc(b)} <span class="muted">${esc(n.website||'')}</span></h3>
       ${n.claims.map(c => `<div class="small"><span class="pill ${esc(c.status)}">${esc(c.status)}</span> ${esc(c.claim)}</div>`).join('')}

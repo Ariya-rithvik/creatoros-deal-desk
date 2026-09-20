@@ -19,7 +19,12 @@ analytics). The bigger parts are NOT built. See `PLAN.md`.
 ## 2. State right now
 
 * Location: `D:\creatoros` (git repo, see `git log`). Python 3.14, Windows 11. Not on any remote.
-* `python -m pytest` -> 82 passed. `python -m pyflakes creatoros scripts tests` -> clean.
+* HACKATHON: **First Commit** (AWS Builder Center x WeMakeDevs x Bharat Builds Tour, Sept 17-20 2026),
+  **Build It** track. AWS open source used: **Cedar**. Submission writeup is `SUBMISSION.md`. Judging criteria are
+  Idea/Impact, Built on AWS (required to win), Learning, Execution, Demo video (<=3 min, YouTube).
+  Rule that mattered: "old projects do not count" - every file and both commits are dated 2026-09-20, inside the
+  window; `truth_set.py` is a vendored older component and says so at the top of the file.
+* `python -m pytest` -> 100 passed. `python -m pyflakes creatoros scripts tests` -> clean.
 * `python scripts/eval_sender.py` -> 14/14 scams caught, 0/17 legit offers blocked. The same 31-offer set against the
   pre-audit detector: 14/14 scams, **5/17 legit wrongly blocked**. CAVEAT UNCHANGED: the labeled set
   (`eval/labeled_offers.json`) was written by us and rules were tuned on its failures. It is a regression
@@ -73,6 +78,9 @@ creatoros/
   terms.py           terms vs creator norms (profile.norms)
   fit.py             brand category vs never_promote / preferred (word-bounded regexes)
   risk.py            Risk Aggregator (visible weights) + counter-email DRAFT
+  policy.py          Policy Agent: the creator's Cedar rules (AWS OSS). TIGHTEN-ONLY: pipeline.decide()
+                     keeps its own guard and BOTH must allow. Fails closed on a bad file; abstains if
+                     cedarpy is missing. Do not make it authoritative on its own.
   campaign.py        accepted offer -> campaign (approved/held-back claims, disclosure checklist)
   script_agent.py    sponsor segment; invariants enforced by line_supported() and check_script()
   memory.py          profile + hash-chained decision ledger + Creator Trust Graph (one JSON file, atomic writes)
@@ -83,7 +91,10 @@ sample_data/         profile.json, offers/*.txt, sites/{xyz_ai,lumen_cloud,looka
 eval/labeled_offers.json   31 labeled offers (self-authored; l13-l17 are the near-miss legit domains)
 scripts/             demo.py, eval_sender.py
 tests/               test_deal_desk.py (core), test_hardening.py (safety + review fixes),
-                     test_audit_fixes.py (second audit; each test verified to fail pre-fix)
+                     test_audit_fixes.py (second audit; each test verified to fail pre-fix),
+                     test_policy.py (Cedar layer, incl. "a permissive policy cannot unlock the guard")
+policies/deal_desk.cedar   the creator's decision rules, as editable Cedar data
+SUBMISSION.md        hackathon writeup: problem, build, where AWS fits, learning, honest limits
 ```
 
 ## 5. Data flow (what `DealDesk.check()` does)

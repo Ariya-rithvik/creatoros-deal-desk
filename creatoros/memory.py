@@ -75,12 +75,15 @@ class Memory:
         return list(self.data["offers"].values())
 
     # -- decision ledger (hash chained) -----------------------------------------------
-    def add_ledger(self, offer_id: str, brand: str, action: str, risk: str, note: str = "") -> Dict[str, Any]:
+    def add_ledger(self, offer_id: str, brand: str, action: str, risk: str, note: str = "",
+                   policy: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Append a decision. `policy` records which Cedar rules allowed it, so the audit trail says
+        not just what the creator decided but under which version of their own rules."""
         with self.lock:
             led = self.data["ledger"]
             prev = led[-1]["hash"] if led else "genesis"
             entry = {"seq": len(led) + 1, "ts": int(time.time()), "offer_id": offer_id, "brand": brand,
-                     "action": action, "risk": risk, "note": note, "prev_hash": prev}
+                     "action": action, "risk": risk, "note": note, "policy": policy or {}, "prev_hash": prev}
             entry["hash"] = _hash(prev, {k: v for k, v in entry.items() if k != "hash"})
             led.append(entry)
             self.save()

@@ -14,7 +14,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from . import campaign as campaign_mod
-from . import script_agent, site_explorer
+from . import policy, script_agent, site_explorer
 from .claims import extract_claims, verify_claims
 from .fit import analyze_fit
 from .memory import Memory
@@ -146,13 +146,24 @@ class DealDesk:
                 raise DealDeskError("decision must be accept, counter or decline")
             level = rep["risk"]["level"]
             risky = level in ("DO_NOT_ENGAGE", "HIGH")
+            # Gate 1: the built-in guard. This is the floor and the policy file cannot lower it.
             if decision == "accept" and risky and not override:
                 raise DealDeskError(f"Risk is {level}. Accepting needs an explicit override (override=true) "
                                     f"and is recorded in the ledger.")
+            # Gate 2: the creator's own Cedar policy, which may only tighten gate 1 (see policy.py).
+            verdict = policy.evaluate(decision, risk=level, override=bool(override), checked=True,
+                                      creator=str(self.memory.profile.get("name") or "creator"),
+                                      offer_id=offer_id,
+                                      category=next(iter(rep.get("fit", {}).get("categories") or []), ""))
+            if not verdict.allowed:
+                raise DealDeskError(f"Refused by your own policy in policies/deal_desk.cedar. {verdict.note}"
+                                    + (f" ({'; '.join(verdict.errors)})" if verdict.errors else ""))
             overridden = decision == "accept" and risky and override
             entry = self.memory.add_ledger(offer_id, rep["brand"], decision, level,
-                                           (note + (f" [OVERRIDE of {level}]" if overridden else "")).strip())
-            offer["decision"] = {"decision": decision, "override": overridden, "ledger_seq": entry["seq"]}
+                                           (note + (f" [OVERRIDE of {level}]" if overridden else "")).strip(),
+                                           policy=verdict.as_dict())
+            offer["decision"] = {"decision": decision, "override": overridden, "ledger_seq": entry["seq"],
+                                 "policy": verdict.as_dict()}
             offer["campaign"] = campaign_mod.build_campaign(offer, rep["claims"], self.memory.profile) \
                 if decision == "accept" else None
             offer["script"] = None

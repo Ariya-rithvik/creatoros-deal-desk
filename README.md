@@ -26,7 +26,7 @@ publishing and analytics are deliberately **not** built yet.
 ```bash
 pip install -r requirements.txt
 python -m playwright install chromium
-python -m pytest                       # 82 tests
+python -m pytest                       # 100 tests
 python scripts/demo.py                 # terminal demo, real Chromium (add --static for no browser)
 python -m uvicorn creatoros.server:app --port 8090   # then open http://127.0.0.1:8090
 python scripts/eval_sender.py          # regression eval on 31 labeled offers
@@ -45,6 +45,7 @@ No API key is needed. Everything is deterministic, so results are repeatable and
 | Terms Analyst | `terms.py` | terms vs the creator's own norms (exclusivity, Net days, usage rights, rate card) |
 | Fit Analyst | `fit.py` | brand category vs the creator's never-promote list |
 | Risk Aggregator | `risk.py` | one verdict (LOW / MEDIUM / HIGH / DO_NOT_ENGAGE), every point mapped to a named reason, plus a counter-email draft |
+| Policy Agent | `policy.py` | the creator's own decision rules, written in **Cedar** (`policies/deal_desk.cedar`) and evaluated by AWS's open-source policy engine |
 | Campaign Agent | `campaign.py` | accepted offer -> deadline, approved/held-back claims, disclosure checklist |
 | Script Agent | `script_agent.py` | sponsor segment in the creator's voice from verified claims only |
 | Creator Memory | `memory.py` | profile, hash-chained decision ledger, Creator Trust Graph |
@@ -59,6 +60,11 @@ No API key is needed. Everything is deterministic, so results are repeatable and
 * The local server refuses foreign `Host` headers (DNS rebinding) and any non-GET request without the `X-CreatorOS`
   header (CSRF), exposes no API docs, and caps input sizes. Keep it bound to 127.0.0.1: there is no login.
 * A risky offer can only be accepted with an explicit override, and the override is recorded in the ledger.
+* The decision rules also live in `policies/deal_desk.cedar`, as **Cedar** policies the creator can read and edit.
+  That layer can only ever **tighten**: `pipeline.decide()` keeps its own guard and a decision needs both to allow it,
+  so a wide-open policy file still cannot accept a `DO_NOT_ENGAGE` offer (there is a test for exactly that). A policy
+  file that will not parse fails **closed**; if `cedarpy` is not installed the layer abstains and says so, and the
+  built-in guard is unchanged. The ledger records which named rule allowed each decision.
 * No reply is drafted for a suspected scam. Only our own fictional demo fixtures are read for such offers, as plain HTML with no scripts.
 * The script never invents the creator's experience: that line is a visible placeholder.
 * The disclosure line always comes before any claim; every factual line cites facts from the brand's site, and every

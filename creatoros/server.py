@@ -17,6 +17,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
+from . import policy
 from .memory import Memory
 from .pipeline import DealDesk, DealDeskError
 
@@ -81,7 +82,8 @@ def index() -> str:
 
 @app.get("/api/state")
 def state() -> Dict[str, Any]:
-    return {"profile": desk.memory.profile, "offers": [_summary(o) for o in desk.memory.list_offers()]}
+    return {"profile": desk.memory.profile, "offers": [_summary(o) for o in desk.memory.list_offers()],
+            "policy": policy.describe()}
 
 
 @app.post("/api/samples")
@@ -136,7 +138,8 @@ def script(oid: str, body: ScriptReq) -> Dict[str, Any]:
 @app.get("/api/memory")
 def memory() -> Dict[str, Any]:
     m = desk.memory
-    return {"profile": m.profile, "ledger": m.data["ledger"], "ledger_check": m.verify_ledger(), "trust": m.trust_graph()}
+    return {"profile": m.profile, "ledger": m.data["ledger"], "ledger_check": m.verify_ledger(),
+            "trust": m.trust_graph(), "policy": policy.describe()}
 
 
 @app.post("/api/reset")
